@@ -1,0 +1,6 @@
+{
+  "name": "Amazing Office",
+  "description": "AI-powered office productivity suite by Amazing Digitals for Word documents, Spreadsheets, Presentations, PDF Studio, Image Editor, and File Conversions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

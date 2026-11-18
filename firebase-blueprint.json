@@ -1,0 +1,365 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Registered user profile and subscription status in Amazing Office AI Suite.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the account owner."
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Full display name of the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "Unique username handle."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified Google account email."
+        },
+        "phone": {
+          "type": "string",
+          "description": "User phone number."
+        },
+        "subscriptionTier": {
+          "type": "string",
+          "enum": ["FREE", "BASIC", "PRO", "PREMIUM"],
+          "description": "Active subscription plan tier."
+        },
+        "storageUsedBytes": {
+          "type": "integer",
+          "description": "Total cloud storage consumed in bytes."
+        },
+        "storageQuotaBytes": {
+          "type": "integer",
+          "description": "Maximum allowed cloud storage in bytes."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of registration (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "fullName",
+        "username",
+        "email",
+        "phone",
+        "subscriptionTier",
+        "storageUsedBytes",
+        "storageQuotaBytes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "OfficeFile": {
+      "title": "OfficeFile",
+      "description": "A user-owned document, spreadsheet, presentation, PDF, image, or folder stored in cloud workspace.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "title": {
+          "type": "string",
+          "description": "Document or folder title."
+        },
+        "fileType": {
+          "type": "string",
+          "enum": ["WORD", "SPREADSHEET", "PRESENTATION", "PDF", "IMAGE", "FOLDER"],
+          "description": "Office application document type."
+        },
+        "folderId": {
+          "type": "string",
+          "description": "Parent folder ID or empty string for root."
+        },
+        "content": {
+          "type": "string",
+          "description": "Structured content payload (rich text, spreadsheet grid/formulas, slide deck, PDF annotations, or image operations)."
+        },
+        "pageSettings": {
+          "type": "string",
+          "description": "Page layout, paper size, orientation, margins, headers and footers metadata."
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "description": "Document size in bytes."
+        },
+        "trashed": {
+          "type": "boolean",
+          "description": "Whether the file is in Recently Deleted."
+        },
+        "sharedWithEmails": {
+          "type": "string",
+          "description": "Comma-separated list of authorized collaborator emails."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last modification server timestamp (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "fileType",
+        "folderId",
+        "content",
+        "pageSettings",
+        "sizeBytes",
+        "trashed",
+        "sharedWithEmails",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PaymentRequest": {
+      "title": "PaymentRequest",
+      "description": "Manual OPay bank transfer payment verification request submitted by a user and verified exclusively by the Super Administrator.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Customer Firebase Auth UID."
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Full name of the customer."
+        },
+        "customerEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "Registered email address of the customer."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Customer phone number."
+        },
+        "selectedPlan": {
+          "type": "string",
+          "enum": ["BASIC", "PRO", "PREMIUM"],
+          "description": "Subscription tier being purchased."
+        },
+        "amountTransferred": {
+          "type": "integer",
+          "description": "Amount transferred in Nigerian Naira (NGN)."
+        },
+        "transactionReference": {
+          "type": "string",
+          "description": "OPay / bank transfer transaction reference number."
+        },
+        "paymentDate": {
+          "type": "string",
+          "description": "Date of bank transfer."
+        },
+        "receiptSummary": {
+          "type": "string",
+          "description": "Uploaded transfer receipt details and verification metadata."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "UNDER_REVIEW", "VERIFIED", "REJECTED"],
+          "description": "Payment verification status controlled solely by the Super Administrator."
+        },
+        "verifiedByAdminId": {
+          "type": "string",
+          "description": "UID of the Super Administrator who verified or rejected the payment."
+        },
+        "verificationNotes": {
+          "type": "string",
+          "description": "Administrator approval note or rejection reason."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Submission server timestamp (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last status update server timestamp (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "customerName",
+        "customerEmail",
+        "phoneNumber",
+        "selectedPlan",
+        "amountTransferred",
+        "transactionReference",
+        "paymentDate",
+        "receiptSummary",
+        "status",
+        "verifiedByAdminId",
+        "verificationNotes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PricingPlan": {
+      "title": "PricingPlan",
+      "description": "Subscription plan configuration managed by the Super Administrator.",
+      "type": "object",
+      "properties": {
+        "tier": {
+          "type": "string",
+          "enum": ["FREE", "BASIC", "PRO", "PREMIUM"],
+          "description": "Plan tier identifier."
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the plan."
+        },
+        "priceNgn": {
+          "type": "integer",
+          "description": "Monthly price in Nigerian Naira (NGN)."
+        },
+        "storageQuotaMb": {
+          "type": "integer",
+          "description": "Included cloud storage quota in MB."
+        },
+        "featuresSummary": {
+          "type": "string",
+          "description": "Line-delimited list of enabled office features."
+        },
+        "updatedByUid": {
+          "type": "string",
+          "description": "Admin UID who last updated the plan."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of update (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "tier",
+        "name",
+        "priceNgn",
+        "storageQuotaMb",
+        "featuresSummary",
+        "updatedByUid",
+        "updatedAt"
+      ]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Super Administrator account state and password-rotation metadata.",
+      "type": "object",
+      "properties": {
+        "adminUid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the super administrator."
+        },
+        "username": {
+          "type": "string",
+          "description": "Admin username (must be amazingdigitals)."
+        },
+        "passwordHash": {
+          "type": "string",
+          "description": "SHA-256 hash of the administrator password after initial rotation."
+        },
+        "mustChangePassword": {
+          "type": "boolean",
+          "description": "Whether the administrator must change the initial password on login."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "adminUid",
+        "username",
+        "passwordHash",
+        "mustChangePassword",
+        "updatedAt"
+      ]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable administrator security audit record.",
+      "type": "object",
+      "properties": {
+        "actorUid": {
+          "type": "string",
+          "description": "Admin UID performing the privileged action."
+        },
+        "actorName": {
+          "type": "string",
+          "description": "Admin username or display name."
+        },
+        "actionType": {
+          "type": "string",
+          "description": "Type of privileged action (e.g., PAYMENT_VERIFIED, PAYMENT_REJECTED, PLAN_UPDATED)."
+        },
+        "targetId": {
+          "type": "string",
+          "description": "ID of the affected payment request, user, or plan."
+        },
+        "details": {
+          "type": "string",
+          "description": "Detailed description of the verification or change."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the event (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "actorUid",
+        "actorName",
+        "actionType",
+        "targetId",
+        "details",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile and subscription quota state."
+    },
+    "/users/{userId}/files/{fileId}": {
+      "schema": { "$ref": "#/entities/OfficeFile" },
+      "description": "User-owned Word documents, Spreadsheets, Presentations, PDFs, Images, and Folders."
+    },
+    "/payment_requests/{requestId}": {
+      "schema": { "$ref": "#/entities/PaymentRequest" },
+      "description": "Manual OPay bank transfer payment verification requests."
+    },
+    "/pricing_plans/{planId}": {
+      "schema": { "$ref": "#/entities/PricingPlan" },
+      "description": "Configurable subscription plans and pricing in NGN."
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Trusted Super Administrator registry and credential state."
+    },
+    "/audit_logs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Immutable audit trail of all super administrator actions."
+    }
+  }
+}

@@ -1,0 +1,318 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Default-Deny Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- PRIMITIVE HELPERS ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        ('email' in request.auth.token &&
+         'email_verified' in request.auth.token &&
+         request.auth.token.email == "tokpafclara@gmail.com" &&
+         request.auth.token.email_verified == true)
+      );
+    }
+
+    // --- ENTITY VALIDATION BLUEPRINTS ---
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll([
+               'userId', 'fullName', 'username', 'email', 'phone',
+               'subscriptionTier', 'storageUsedBytes', 'storageQuotaBytes',
+               'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'fullName', 'username', 'email', 'phone',
+               'subscriptionTier', 'storageUsedBytes', 'storageQuotaBytes',
+               'createdAt', 'updatedAt'
+             ]) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 120 &&
+             data.username is string && data.username.size() >= 1 && data.username.size() <= 60 &&
+             data.email is string && data.email.size() >= 3 && data.email.size() <= 150 &&
+             data.phone is string && data.phone.size() <= 40 &&
+             data.subscriptionTier is string &&
+             data.subscriptionTier in ['FREE', 'BASIC', 'PRO', 'PREMIUM'] &&
+             data.storageUsedBytes is int && data.storageUsedBytes >= 0 && data.storageUsedBytes <= 1099511627776 &&
+             data.storageQuotaBytes is int && data.storageQuotaBytes >= 1048576 && data.storageQuotaBytes <= 1099511627776 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidOfficeFile(data) {
+      return data.keys().hasAll([
+               'userId', 'title', 'fileType', 'folderId', 'content',
+               'pageSettings', 'sizeBytes', 'trashed', 'sharedWithEmails',
+               'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'title', 'fileType', 'folderId', 'content',
+               'pageSettings', 'sizeBytes', 'trashed', 'sharedWithEmails',
+               'createdAt', 'updatedAt'
+             ]) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+             data.fileType is string &&
+             data.fileType in ['WORD', 'SPREADSHEET', 'PRESENTATION', 'PDF', 'IMAGE', 'FOLDER'] &&
+             data.folderId is string && data.folderId.size() <= 128 &&
+             data.content is string && data.content.size() <= 500000 &&
+             data.pageSettings is string && data.pageSettings.size() <= 5000 &&
+             data.sizeBytes is int && data.sizeBytes >= 0 && data.sizeBytes <= 104857600 &&
+             data.trashed is bool &&
+             data.sharedWithEmails is string && data.sharedWithEmails.size() <= 2000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidPaymentRequest(data) {
+      return data.keys().hasAll([
+               'userId', 'customerName', 'customerEmail', 'phoneNumber',
+               'selectedPlan', 'amountTransferred', 'transactionReference',
+               'paymentDate', 'receiptSummary', 'status',
+               'verifiedByAdminId', 'verificationNotes', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'customerName', 'customerEmail', 'phoneNumber',
+               'selectedPlan', 'amountTransferred', 'transactionReference',
+               'paymentDate', 'receiptSummary', 'status',
+               'verifiedByAdminId', 'verificationNotes', 'createdAt', 'updatedAt'
+             ]) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 120 &&
+             data.customerEmail is string && data.customerEmail.size() >= 3 && data.customerEmail.size() <= 150 &&
+             data.phoneNumber is string && data.phoneNumber.size() >= 1 && data.phoneNumber.size() <= 40 &&
+             data.selectedPlan is string && data.selectedPlan in ['BASIC', 'PRO', 'PREMIUM'] &&
+             data.amountTransferred is int && data.amountTransferred >= 500 && data.amountTransferred <= 100000000 &&
+             data.transactionReference is string && data.transactionReference.size() >= 3 && data.transactionReference.size() <= 120 &&
+             data.paymentDate is string && data.paymentDate.size() >= 1 && data.paymentDate.size() <= 40 &&
+             data.receiptSummary is string && data.receiptSummary.size() >= 1 && data.receiptSummary.size() <= 2000 &&
+             data.status is string && data.status in ['PENDING', 'UNDER_REVIEW', 'VERIFIED', 'REJECTED'] &&
+             data.verifiedByAdminId is string && data.verifiedByAdminId.size() <= 128 &&
+             data.verificationNotes is string && data.verificationNotes.size() <= 1000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidPricingPlan(data) {
+      return data.keys().hasAll([
+               'tier', 'name', 'priceNgn', 'storageQuotaMb',
+               'featuresSummary', 'updatedByUid', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'tier', 'name', 'priceNgn', 'storageQuotaMb',
+               'featuresSummary', 'updatedByUid', 'updatedAt'
+             ]) &&
+             data.tier is string && data.tier in ['FREE', 'BASIC', 'PRO', 'PREMIUM'] &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 60 &&
+             data.priceNgn is int && data.priceNgn >= 0 && data.priceNgn <= 10000000 &&
+             data.storageQuotaMb is int && data.storageQuotaMb >= 10 && data.storageQuotaMb <= 1000000 &&
+             data.featuresSummary is string && data.featuresSummary.size() >= 1 && data.featuresSummary.size() <= 1000 &&
+             data.updatedByUid is string && data.updatedByUid.size() >= 1 && data.updatedByUid.size() <= 128 &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidAdminRecord(data) {
+      return data.keys().hasAll([
+               'adminUid', 'username', 'passwordHash', 'mustChangePassword', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'adminUid', 'username', 'passwordHash', 'mustChangePassword', 'updatedAt'
+             ]) &&
+             data.adminUid is string && data.adminUid.size() >= 1 && data.adminUid.size() <= 128 &&
+             data.username is string && data.username == 'amazingdigitals' &&
+             data.passwordHash is string && data.passwordHash.size() >= 8 && data.passwordHash.size() <= 256 &&
+             data.mustChangePassword is bool &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidAuditLog(data) {
+      return data.keys().hasAll([
+               'actorUid', 'actorName', 'actionType', 'targetId', 'details', 'createdAt'
+             ]) &&
+             data.keys().hasOnly([
+               'actorUid', 'actorName', 'actionType', 'targetId', 'details', 'createdAt'
+             ]) &&
+             data.actorUid is string && data.actorUid.size() >= 1 && data.actorUid.size() <= 128 &&
+             data.actorName is string && data.actorName.size() >= 1 && data.actorName.size() <= 120 &&
+             data.actionType is string && data.actionType.size() >= 1 && data.actionType.size() <= 80 &&
+             data.targetId is string && data.targetId.size() >= 1 && data.targetId.size() <= 128 &&
+             data.details is string && data.details.size() >= 1 && data.details.size() <= 1000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    // --- COLLECTION RULES ---
+
+    // 1. User Profiles
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+
+      // Ordinary users can only initialize their own profile on the FREE plan
+      allow create: if isValidId(userId) &&
+                       isOwner(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().subscriptionTier == 'FREE';
+
+      // Users can update profile details/storageUsedBytes, but NEVER subscriptionTier or storageQuotaBytes.
+      // Only the Super Administrator can upgrade subscriptionTier and storageQuotaBytes.
+      allow update: if isValidId(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt && (
+                         (isOwner(userId) &&
+                          incoming().subscriptionTier == existing().subscriptionTier &&
+                          incoming().storageQuotaBytes == existing().storageQuotaBytes &&
+                          incoming().email == existing().email &&
+                          incoming().diff(existing()).affectedKeys().hasOnly([
+                            'fullName', 'username', 'phone', 'storageUsedBytes', 'updatedAt'
+                          ])) ||
+                         (isAdmin() &&
+                          incoming().diff(existing()).affectedKeys().hasOnly([
+                            'subscriptionTier', 'storageQuotaBytes', 'storageUsedBytes', 'updatedAt'
+                          ]))
+                       );
+
+      allow delete: if false;
+
+      // 2. User-Owned Office Files (Word, Sheets, Slides, PDF, Images, Folders)
+      match /files/{fileId} {
+        allow get: if isValidId(userId) && isValidId(fileId) && (isOwner(userId) || isAdmin());
+        allow list: if isOwner(userId) || isAdmin();
+
+        allow create: if isValidId(userId) &&
+                         isValidId(fileId) &&
+                         isOwner(userId) &&
+                         isValidOfficeFile(incoming()) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().userId == userId;
+
+        allow update: if isValidId(userId) &&
+                         isValidId(fileId) &&
+                         isValidOfficeFile(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isOwner(userId) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'title', 'folderId', 'content', 'pageSettings',
+                           'sizeBytes', 'trashed', 'sharedWithEmails', 'updatedAt'
+                         ]);
+
+        allow delete: if isValidId(userId) && isValidId(fileId) && isOwner(userId);
+      }
+    }
+
+    // 3. Payment Verification Requests (Manual OPay Bank Transfer)
+    match /payment_requests/{requestId} {
+      allow get: if isSignedIn() && isValidId(requestId) && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+
+      // Users can submit a payment receipt ONLY with status == 'PENDING' and blank verifiedByAdminId
+      allow create: if isSignedIn() &&
+                       isValidId(requestId) &&
+                       isValidPaymentRequest(incoming()) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().status == 'PENDING' &&
+                       incoming().verifiedByAdminId == '';
+
+      // CRITICAL SECURITY RULE: ONLY THE SUPER ADMINISTRATOR CAN VERIFY OR REJECT PAYMENTS.
+      // Terminal states ('VERIFIED', 'REJECTED') are locked from non-admin mutation, and ordinary users cannot update payment_requests at all.
+      allow update: if isAdmin() &&
+                       isValidId(requestId) &&
+                       isValidPaymentRequest(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().amountTransferred == existing().amountTransferred &&
+                       incoming().selectedPlan == existing().selectedPlan &&
+                       incoming().transactionReference == existing().transactionReference &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'status', 'verifiedByAdminId', 'verificationNotes', 'updatedAt'
+                       ]);
+
+      allow delete: if false;
+    }
+
+    // 4. Subscription Pricing Plans
+    match /pricing_plans/{planId} {
+      allow get: if isSignedIn() && isValidId(planId);
+      allow list: if isSignedIn() && existing().priceNgn >= 0;
+
+      allow create: if isAdmin() &&
+                       isValidId(planId) &&
+                       isValidPricingPlan(incoming()) &&
+                       incoming().updatedByUid == request.auth.uid;
+
+      allow update: if isAdmin() &&
+                       isValidId(planId) &&
+                       isValidPricingPlan(incoming()) &&
+                       incoming().tier == existing().tier &&
+                       incoming().updatedByUid == request.auth.uid &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'name', 'priceNgn', 'storageQuotaMb', 'featuresSummary', 'updatedByUid', 'updatedAt'
+                       ]);
+
+      allow delete: if false;
+    }
+
+    // 5. Super Administrator Registry
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && isValidId(adminId) && (request.auth.uid == adminId || isAdmin());
+      allow list: if isAdmin();
+
+      allow create: if isAdmin() &&
+                       isValidId(adminId) &&
+                       isValidAdminRecord(incoming()) &&
+                       incoming().adminUid == adminId;
+
+      allow update: if isAdmin() &&
+                       isValidId(adminId) &&
+                       isValidAdminRecord(incoming()) &&
+                       incoming().adminUid == existing().adminUid &&
+                       incoming().username == existing().username &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'passwordHash', 'mustChangePassword', 'updatedAt'
+                       ]);
+
+      allow delete: if false;
+    }
+
+    // 6. Immutable Administrator Audit Logs
+    match /audit_logs/{logId} {
+      allow get: if isAdmin() && isValidId(logId);
+      allow list: if isAdmin() && existing().actorUid.size() >= 1;
+
+      allow create: if isAdmin() &&
+                       isValidId(logId) &&
+                       isValidAuditLog(incoming()) &&
+                       incoming().actorUid == request.auth.uid;
+
+      allow update, delete: if false;
+    }
+  }
+}
